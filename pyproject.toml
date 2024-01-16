@@ -1,0 +1,19 @@
+[build-system]
+requires = ["setuptools", "setuptools-scm"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "app"
+dynamic = ["version"]
+dependencies = [
+  "streamlit~=1.27.1",
+  "pdbpp",
+  "pytest",
+  "flake8"
+]
+
+
+[project.optional-dependencies]
+testing = [
+  "pytest"
+]

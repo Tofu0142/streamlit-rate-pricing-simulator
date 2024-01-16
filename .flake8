@@ -1,0 +1,15 @@
+[flake8]
+ignore = E402,E221,W504
+max-line-length = 127
+forbidden-functions =
+    ; pandas.read_pickle
+    *: pd.read_pickle, is a known critical vulverability - CVE-2020-13091
+    *: pandas.read_pickle, is a known critical vulverability - CVE-2020-13091
+    *: *.read_pickle, is a known critical vulverability - CVE-2020-13091
+    *: read_pickle, is a known critical vulverability - CVE-2020-13091
+
+    ; tensorflow.keras.utils.get_file
+    *: tf.keras.utils.get_file, is a known critical vulnerability - CVE-2021-35958
+    *: tensorflow.keras.utils.get_file, is a known critical vulnerability - CVE-2021-35958
+    *: *.get_file, is a known critical vulnerability - CVE-2021-35958
+    *: get_file, is a known critical vulnerability - CVE-2021-35958

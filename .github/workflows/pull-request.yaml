@@ -1,0 +1,14 @@
+name: Pull Request
+
+on:
+  pull_request:
+    types:
+      - opened
+      - edited
+      - synchronize
+      - labeled
+      - unlabeled
+jobs:
+  validate:
+    uses: getaroom/github-actions/.github/workflows/pull-request.yaml@master
+    secrets: inherit

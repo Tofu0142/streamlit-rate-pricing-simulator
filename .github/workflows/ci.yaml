@@ -1,0 +1,33 @@
+name: "CI"
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions: write-all
+
+jobs:
+  build:
+    uses: getaroom/github-actions/.github/workflows/build-pipeline.yaml@master
+    secrets:
+      token: ${{ secrets.GETAROOMOPS_READ_TOKEN }}
+      wiz-client-id: ${{ secrets.WIZ_CLIENT_ID }}
+      wiz-secret: ${{ secrets.WIZ_SECRET }}
+      nexus-iq-auth: ${{ secrets.NEXUSIQ_AUTH }}
+    with:
+      base-target: deploy
+      deployment-target: deploy
+      nexus-iq-target: deploy
+      test-matrix: |
+        {
+          "include": [
+            {
+              "target": "lint"
+            },
+            {
+              "target": "test"
+            }
+          ]
+        }
