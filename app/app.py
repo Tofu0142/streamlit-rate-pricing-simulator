@@ -14,8 +14,8 @@ from mabwiser.mab import MAB, LearningPolicy, NeighborhoodPolicy
 
 import mlflow
 import sys
-sys.append.path('../')
-from utils import get_data, train_and_eva, train_and_eva1, plot_cumulative_rewards, create_cumulative_rewards_animation
+sys.path.append('../')
+from source.utils import get_data, train_and_eva, train_and_eva1, plot_cumulative_rewards, create_cumulative_rewards_animation
 
 MODELS = {
     "UCB1" : LearningPolicy.UCB1(alpha=1.2),
