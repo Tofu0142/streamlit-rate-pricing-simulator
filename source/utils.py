@@ -13,7 +13,8 @@ from matplotlib import animation
 import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation
 import plotly.graph_objs as go
-
+import os
+print(os.getcwd())
 from simulator_envs_gym import SimulatorEnv1, LogisticModelFeature
 from mab import SimulatorBanditModel
 
@@ -76,39 +77,66 @@ def get_data(features_choice, arms_range, n_arm, n_data):
 
     terminated = False
     action = env.action_space.sample()[0]
-    training_batch_size = n_data
+    training_batch_size = 500
     data = []
     env.reset()
     observation = env._get_obs()
     
     while not terminated:
-        if env.current_index < training_batch_size:
-            action = env.action_space.sample()[0]
-        else:
-            terminated = True
+        
+        action = env.action_space.sample()[0]
+        
         new_observation, reward, terminated, truncated, info = env.step(action)
+        if env.current_index >= training_batch_size:
+            terminated = True
         data.append([observation, action, reward])
         observation = new_observation
 
     df = pd.DataFrame(data, columns=["observation", "action", "reward"])
-    observations_df = df["observation"].apply(pd.Series)
-    df = pd.concat([observations_df, df.drop("observation", axis=1)], axis=1)
-
+    #observations_df = df["observation"].apply(pd.Series)
+    #df = pd.concat([observations_df, df.drop("observation", axis=1)], axis=1)
+    
     return df, env
 
-def train_and_eva(env, model, train, test):
+def train_and_eva(data, env, retrain_mode, arms_range, 
+                   n_arm, learning_policy):
+    training_batch_size = 2000
+    model = SimulatorBanditModel(
+        first_arm=arms_range[0],
+        last_arm=arms_range[1],
+        n_arms=n_arm,
+        learning_policy=learning_policy,)
+    terminated = False
+    
+    ind = 0
+    while not terminated:
+        if ind < len(data):
+            observation, action, reward = data['observation'][ind], data['action'][ind], data['reward'][ind]
+            #print(observation, action, reward)
+            model.collect(observation, action, reward)
+            ind += 1
+        else:
+            action = model.choose_action()
+            new_observation, reward, terminated, truncated, info = env.step(action)
+            if "action" in info:
+                _action = info["action"]
+            else:
+                _action = action
 
-    model.fit(
-        decisions=train["action"],
-        rewards=train["reward"],
-        contexts=train.drop(["action", "reward"], axis=1),
-    )
-    predictions = model.predict(test.drop(["action", "reward"], axis=1))
-    rewards_ = []
-    for i in predictions:
-        _, reward, _, _, _ = env.step(i)
-        rewards_.append(reward)
-    return predictions, rewards_
+            model.collect(observation, _action, reward)
+            observation = new_observation
+        
+        if retrain_mode == 'Retrain all data':
+            if (env.current_index > 0 ):
+                model.train()
+
+        elif retrain_mode == 'Retrain every 2 days':
+            if (env.current_index > 0 ) and (env.current_index % training_batch_size == 0):
+                print(env.current_index)
+                model.train()
+
+
+    return model
 
 def train_and_eva1(features_choice, 
                    arms_range, 
@@ -130,7 +158,7 @@ def train_and_eva1(features_choice,
     terminated = False
     action = env.action_space.sample()[0]
     training_batch_size = 200
-    data = []
+   
     env.reset()
     observation = env._get_obs()
     

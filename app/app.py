@@ -14,14 +14,13 @@ from mabwiser.mab import MAB, LearningPolicy, NeighborhoodPolicy
 
 import mlflow
 import sys
-sys.path.append('../')
-from source.utils import get_data, train_and_eva, train_and_eva1, plot_cumulative_rewards, create_cumulative_rewards_animation
+sys.path.append('./source/')
+from utils import get_data, train_and_eva, train_and_eva1, plot_cumulative_rewards, create_cumulative_rewards_animation
 
 MODELS = {
     "UCB1" : LearningPolicy.UCB1(alpha=1.2),
     "EG" : LearningPolicy.EpsilonGreedy(epsilon=0.1),
     "TS" : LearningPolicy.ThompsonSampling(),
-    "LinTS": LearningPolicy.LinTS()
 }
 
 FEATURES = [    "base_price",
@@ -39,10 +38,13 @@ st.set_page_config(
 
 
 # train the model
-def train_model (exp_name, n_data, arms_range, n_arm, features_choice, models_choice):
+def train_model (exp_name, n_data, arms_range, n_arm, features_choice, models_choice, retrain_mode):
 
     experiment = mlflow.set_experiment(exp_name)    
     results = {}
+
+
+    train_data, train_env = get_data(features_choice, arms_range, n_arm, n_data)
 
     for model in models_choice:
         with mlflow.start_run(experiment_id=experiment.experiment_id):
@@ -51,8 +53,11 @@ def train_model (exp_name, n_data, arms_range, n_arm, features_choice, models_ch
             mlflow.log_param("n_arm", n_arm)
             mlflow.log_param("n_data", n_data)
             mlflow.log_param("model", model)
-            print( MODELS[model])
-            agent  = train_and_eva1(features_choice, arms_range, n_arm, n_data, MODELS[model])
+            # print( MODELS[model])
+            print('before', MODELS[model], train_env.current_index)
+            train_env.current_index = len(train_data)
+            print('after', MODELS[model], train_env.current_index)
+            agent  = train_and_eva(train_data.copy(), train_env, retrain_mode, arms_range, n_arm, MODELS[model])
             
             conversation_rate = agent.data.reward.mean().round(2)
             mlflow.log_metric("conversation_rate", conversation_rate)
@@ -126,6 +131,7 @@ def main():
     if not features_choice:
         st.stop()
 
+    retrain_mode = st.sidebar.radio("Select the retrain mode", ["Retrain all data", "Retrain every 2 days"], index=0)
 
 
     # Launch Mlflow from Streamlit
@@ -152,7 +158,7 @@ def main():
     # Training the model starts from here
     if st.button("Train Model"):
         with st.spinner('Training the model...'):
-            st.session_state.results = train_model(exp_name, n_data, arms_range, n_arm, features_choice, models_choice)
+            st.session_state.results = train_model(exp_name, n_data, arms_range, n_arm, features_choice, models_choice, retrain_mode)
         st.success('Trained !')
     if 'results' not in st.session_state or not st.session_state.results:
         st.stop()
@@ -175,9 +181,14 @@ def main():
         st.plotly_chart(fig)
 
     with st.form('form'):
-        step = (arms_range[1] - arms_range[0]) / (n_arm - 1) if n_arm > 1 else 1
-        
-        selected_action = st.slider("Select Action", arms_range[0], arms_range[1], step=step)
+        # Process the form submission
+        if 'prepared_results' not in st.session_state:
+            st.session_state.prepared_results = prepare_data(st.session_state.results)
+            print(st.session_state.prepared_results)
+        step = (arms_range[1] - arms_range[0]) / (n_arm -1 ) if n_arm > 1 else 1
+        min_action = min(df['action'].min() for df in st.session_state.results.values())
+        max_action = max(df['action'].max() for df in st.session_state.results.values())
+        selected_action = st.slider("Select Action", min_action, max_action)
 
         submitted = st.form_submit_button('Show')
         plot_container = st.empty()
@@ -185,9 +196,7 @@ def main():
     
     if submitted:
         
-        # Process the form submission
-        if 'prepared_results' not in st.session_state:
-            st.session_state.prepared_results = prepare_data(st.session_state.results)
+        
 
         st.session_state.selected_action = selected_action
         fig = plot_reward_distribution(st.session_state.prepared_results, st.session_state.selected_action)

@@ -3,6 +3,7 @@ import scipy.stats as stats
 from typing import Optional
 from gymnasium import spaces
 import numpy as np
+np.random.seed(seed=233423)
 
 from room_pricing.bandits.bayesian_model import spaces as custom_spaces
 

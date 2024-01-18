@@ -142,7 +142,7 @@ class SimulatorEnv1(custom_env.BaseEnv):
                  n_actions: int = 100,
                  intercept: float = 10.0,
                  features: Dict[str, LogisticModelFeature] = None,
-                 n_reps: int = 1000,
+                 n_reps: int = 10000,
                  **kwargs):
         self.discrete_action_space = discrete_action_space
 
