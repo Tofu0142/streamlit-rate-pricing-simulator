@@ -13,8 +13,7 @@ RUN apt-get update --fix-missing \
   && apt-get install gcc -y \
   && apt-get clean
 
-RUN pip install --upgrade setuptools pip pip-tools --no-cache-dir && \
-  pip-sync --pip-args "--no-cache-dir"
+RUN pip install .
 
 
 FROM python:3.11-slim as deploy
@@ -30,9 +29,11 @@ RUN groupadd -r app -g1000 &&\
   chown -R app:app /app
 
 COPY --from=builder /opt/venv /opt/venv
-COPY --from=builder /app/app /app/app
+COPY --from=builder /app/source /app/source
 COPY --from=builder /app/*.py /app/
 COPY --from=builder /app/requirements.txt /app/
+
+ENV PYTHONPATH="/app/source:$PYTHONPATH"
 
 EXPOSE 8501
 

@@ -53,7 +53,7 @@ class ThompsonAgent:
         z = A - B - 1
         z = np.real(lambertw(np.exp(z)))
         action = -(z + B + 1) / B
-        
+
         if self.env.discrete_action_space:
             action = self.get_closest_available_action(
                 action, available_actions=self.env.action_space.to_list()

@@ -1,3 +1,3 @@
-from app.ui import ui
+from app.app_v2 import main
 
-ui()
+main()

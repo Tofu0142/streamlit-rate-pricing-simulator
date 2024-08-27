@@ -1,8 +1,6 @@
 from typing import Optional, Union, List
-# import gymnasium as gym
-#from gymnasium import spaces
-import gym 
-from gym import spaces
+import gymnasium as gym
+from gymnasium import spaces
 import pandas as pd
 import numpy as np
 import scipy.stats as stats
@@ -10,9 +8,7 @@ from room_pricing.bandits.bayesian_model import spaces as custom_spaces
 
 
 class BaseEnv(gym.Env):
-    def __init__(
-        self, **kwargs
-    ):
+    def __init__(self, **kwargs):
         self.current_index = 0
         self.action = None
         self._current_state = None

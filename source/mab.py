@@ -5,7 +5,7 @@ from mabwiser.mab import MAB, LearningPolicyType,NeighborhoodPolicyType, Learnin
 
 import mlflow 
 
-from spaces_gym import custom_spaces
+from environments.spaces_gym import custom_spaces
 
 class SimulatorBanditModel(MAB, mlflow.pyfunc.PythonModel):
     
@@ -25,9 +25,13 @@ class SimulatorBanditModel(MAB, mlflow.pyfunc.PythonModel):
         self.data = pd.DataFrame()
         self._data = pd.DataFrame()
 
-    def train(self, *args, **kwargs):
-        super().partial_fit(self._data["action"], self._data["reward"], *args, **kwargs)
-        self._data = pd.DataFrame()
+    def train(self, reward, *args, **kwargs):
+        if reward == 'profit':
+            super().partial_fit(self._data["action"], self._data["reward"], *args, **kwargs)
+            self._data = pd.DataFrame()
+        elif reward == 'converted':
+            super().partial_fit(self._data["action"], self._data["converted"], *args, **kwargs)
+            self._data = pd.DataFrame()
 
     def choose_action(self, *args, **kwargs):
         if self._is_initial_fit:
@@ -40,9 +44,10 @@ class SimulatorBanditModel(MAB, mlflow.pyfunc.PythonModel):
         observation: Dict[str, Any],
         action: float,
         reward: float | int,
+        converted: float | int,
     ):
         temp_df = pd.DataFrame(
-            {**observation, **{"action": [action], "reward": [reward]}}
+            {**observation, **{"action": [action], "reward": [reward], "converted": [converted]}}
         )
         
         self.data = pd.concat(

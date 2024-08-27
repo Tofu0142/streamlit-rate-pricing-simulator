@@ -3,15 +3,15 @@ requires = ["setuptools", "setuptools-scm"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "app"
-dynamic = ["version"]
-dependencies = [
-  "streamlit~=1.27.1",
-  "pdbpp",
-  "pytest",
-  "flake8"
-]
+name = "rate-pricing-simulator"
+dynamic = ["version", "dependencies"]
 
+[tool.setuptools.packages.find]
+where = ["source"]
+include = ["app*", "room_pricing*"]
+
+[tool.setuptools.dynamic]
+dependencies = {file = ["requirements.txt"]}
 
 [project.optional-dependencies]
 testing = [
